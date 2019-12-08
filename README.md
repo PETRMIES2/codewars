@@ -1,6 +1,7 @@
-Random stuff that about coding. 
+# Playinground
 
 
 #Atom:
   ALT+R with atom runner
   CTRL-ALT-B format
+
