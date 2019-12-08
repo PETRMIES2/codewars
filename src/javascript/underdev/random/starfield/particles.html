@@ -1,0 +1,173 @@
+
+<html>
+<head>
+	<title>Lumosit canvas - demo - unfinished</title>
+</head>
+<body>
+	<canvas id="demo" width="800" height="800"></canvas>
+
+ <script>
+ 	var canvas = document.getElementById('demo');
+ 	var content2D = canvas.getContext('2d');
+ 	var width = canvas.width;
+ 	var height = canvas.height;
+ 	var drawingArea = width * height;
+ 	var boxParticlesCount = 200;
+ 	var Animation;
+ 	var boxParticles = [];
+ 	var animatedText;
+ 	var mousePosition;
+
+ 	TextContainer.prototype.draw = drawText;
+ 	TextContainer.prototype.build = buildText;
+ 	BoxParticle.prototype.build = buildParticle;
+	BoxParticle.prototype.drawParticle = drawParticle;
+
+     function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+
+	canvas.addEventListener('mousedown', mousedown, false);
+
+	function mousedown(evt) {
+         mousePosition = getMousePos(canvas, evt);
+      }
+
+ 	function BoxParticle(name) {
+ 		this.name = name;
+ 		this.hue = rand(50,0,1);
+ 		this.active = false;
+ 	}
+
+ 	function buildParticle() {
+ 		  if (mousePosition) {
+		      this.x = mousePosition.x;
+			  this.y = mousePosition.y;
+			  this.r = 3;
+			  this.vx = Math.random() * 10 - 5;
+			  this.vy = Math.random() * 10 - 5;
+			  this.gravity = 0;
+			  this.opacity = Math.random() + .5;
+			  this.active = true;
+
+
+	 		content2D.beginPath();
+	//      	content2D.arc(this.x, this.y, this.r, this.r, 2 * Math.PI, false);
+	      	content2D.rect(this.x, this.y, this.r, this.r);
+	  		content2D.fillStyle = "hsla(" + this.hue + ",100%,50%,1)";
+	  		content2D.fill();
+
+		}
+ 	}
+ 	function TextContainer(name) {
+ 		this.name = name;
+		this.direction = 1;
+ 	}
+
+ 	function buildText() {
+ 		 this.x = 0;
+		  this.y = 60;
+		  this.vx = Math.random() * 10 - 5;
+		  this.vy = Math.random() * 10 - 5;
+		  this.gravity = .01;
+		  this.opacity = Math.random() + .5;
+		  this.active = true;
+    	content2D.font = '60pt Calibri';
+	 	content2D.lineWidth = 3;
+	 	content2D.strokeStyle = 'blue';
+	 	content2D.strokeText(this.name,0, 60);
+
+ 	}
+	function drawText() {
+	  this.x += this.direction;
+
+  	content2D.font = '60pt Calibri';
+  	content2D.lineWidth = 3;
+	 	content2D.strokeStyle = 'blue';
+	 	content2D.strokeText(this.name,this.x, 60);
+
+
+	  // reset text
+	  if(this.x >= width) {
+			this.direction = -1;
+	  }
+		if (this.x < 0) {
+			this.direction = 1;
+		}
+	};
+
+	function drawParticle() {
+	  this.active = true;
+	  this.x += this.vx;
+	  this.y += this.vy;
+	  this.vy += this.gravity;
+	  this.hue -= 0.5;
+	//  this.r = Math.abs(this.r - .05);
+
+	  content2D.beginPath();
+      content2D.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false);
+//      	content2D.rect(this.x, this.y, this.r, this.r);
+	  content2D.fillStyle = "hsla(" + this.hue + ",100%,50%,1)";
+	  content2D.fill();
+
+	  // reset particle
+	  if(this.x > width || this.x < 0 || this.y < 0 || this.y > height) {
+	    this.active = false;
+	  }
+	};
+
+ 	function drawScene() {
+ 		content2D.fillStyle = "black";
+ 		content2D.fillRect(0,0,width, height);
+
+ 		for(var i = 0; i < boxParticles.length; i++) {
+		    if(boxParticles[i].active === true) {
+		      boxParticles[i].drawParticle();
+		    } else {
+		      boxParticles[i].build();
+		    }
+		  }
+	  	animatedText.draw();
+		  Animation = requestAnimationFrame(drawScene);
+
+ 	}
+ 	function initDemo() {
+
+		  if(boxParticles.length) {
+		    boxParticles = [];
+		    cancelAnimationFrame(Animation);
+		    Animation;
+		    console.log(Animation);
+		  }
+		  width = canvas.width = window.innerWidth;
+    	  height = canvas.height = window.innerHeight;
+
+ 		for(var i = 0; i < boxParticlesCount; i++) {
+    		boxParticles.push(new BoxParticle(i));
+    	}
+    	animatedText = new TextContainer("Noobie testing HTML5");
+			animatedText.build();
+    	drawScene();
+ 	}
+
+
+ 	(function () {
+ 		initDemo();
+ 	})();
+
+ 	function rand(max, min, _int) {
+	  var max = (max === 0 || max)?max:1,
+	      min = min || 0,
+	      gen = min + (max - min) * Math.random();
+
+	  return (_int) ? Math.round(gen) : gen;
+	};
+
+ </script>
+
+</body>
+</html>

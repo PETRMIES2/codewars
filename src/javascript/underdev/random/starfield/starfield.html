@@ -1,0 +1,201 @@
+<html>
+   <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="simpledemo" width="800" height="600" style="background-color: #000000;"></canvas>
+    <script>
+    /** Playing with HTML5 canvas */
+      let canvas = document.getElementById('simpledemo');
+      let context = canvas.getContext('2d');
+      let centerX = canvas.width / 2;
+      let centerY = canvas.height/ 2;
+      var width = canvas.width;
+      var height = canvas.height;
+      let points = [];
+      let fov = 350;
+      let starfieldParticleCount = 200;
+     	let starfieldParticles = [];
+      class Circle {
+        constructor(radius, color, direction) {
+          this.radius = radius;
+          this.color = color;
+          this.direction = direction;
+        }
+        updateDirection() {
+          if (this.radius > 200) {
+            this.direction = -1;
+          } else if (this.radius < 1) {
+            this.direction = 1;
+          }
+        }
+        update() {
+          this.updateDirection();
+          this.radius += this.direction;
+        }
+      }
+
+      draw3Din2D = ([x3d, y3d, z3d]) =>
+      {
+      	let  scale = fov/(fov+z3d);
+      	let  x2d = (x3d * scale) + centerX;
+      	let  y2d = (y3d * scale)  + centerY;
+     	  context.lineWidth= scale;
+      	context.moveTo(x2d,y2d);
+        context.rect(x2d+scale, y2d, 3, 0, 2 * Math.PI, false);
+        context.lineWidth = 1;
+      }
+
+      initPoints = (numPoints)=> {
+      	for (i=0; i<numPoints; i++) {
+      		let point = [(Math.random()*400)-200, (Math.random()*400)-200 , (Math.random()*400)-200 ];
+      		points.push(point);
+      	}
+
+      }
+      render = (circles) => {
+        circles.forEach(circle=> {
+          context.arc(centerX, centerY, circle.radius, 0, 2 * Math.PI, false);
+          context.lineWidth = 1;
+          context.strokeStyle = circle.color;
+        });
+      }
+      renderStarfield = () => {
+        context.beginPath();
+
+        for (let i=0, len = points.length;i< len; i++) {
+            let point3d = points[i];
+            let z3d = point3d[2];
+            z3d -= 4;
+            if(z3d<-fov) z3d += 400;
+            point3d[2] = z3d;
+            draw3Din2D(point3d);
+          }
+          context.closePath();
+          context.stroke();
+          for(var i = 0; i < starfieldParticles.length; i++) {
+          		    if(starfieldParticles[i].active === true) {
+          		      starfieldParticles[i].drawParticle();
+          		    } else {
+          		      starfieldParticles[i].build(i);
+          		    }
+          		  }
+
+      }
+      createCircles = (count) => {
+        let circles = [];
+         for(let i = 0; i < count; ++i) {
+           circles.push(new Circle(i*10,'#FFFFFF',1));
+         }
+         return circles;
+      }
+      let wave = 10;
+      renderText = (text, x=canvas.width/2, y = canvas.height/2) => {
+        context.fillStyle = "red";
+        context.font = "15px Arial";
+        context.fillText(text,x,y);
+      }
+
+      StarfieldParticle.prototype.build = buildParticle;
+    	StarfieldParticle.prototype.drawParticle = drawParticle;
+
+      function drawParticle() {
+    	  this.active = true;
+    	  this.x += this.vx;
+    	  this.vy += this.gravity;
+    	  this.hue -= 0.5;
+
+    	  context.beginPath();
+          context.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false);
+    	  context.fillStyle = "hsla(" + this.hue + ",100%,50%,1)";
+    	  context.fill();
+
+    	  // reset particle
+    	  if(this.x > width) {
+    	    this.active = false;
+    	  }
+    	};
+
+     	function StarfieldParticle(name) {
+     		this.name = name;
+     		this.hue = rand(50,0,1);
+     		this.active = false;
+     	}
+
+      function buildParticle(number) {
+    		      this.x = 0;
+    			  this.y = ((Math.random() * height) + 1);
+    			  this.r = rand(3,1,1);
+    			  this.vx = rand(10,1,1);
+    			  this.vy = 0;
+    			  this.gravity = 0;
+    			  this.opacity = Math.random() + .5;
+    			  this.active = true;
+
+    	 		context.beginPath();
+    	      	context.rect(this.x, this.y, this.r, this.r);
+    	  		context.fillStyle = "hsla(" + this.hue + ",100%,50%,1)";
+    	  		context.fill();
+     	}
+
+      drawClock = (angle) => {
+        [x, y] = [canvas.width/2,canvas.height/2];
+        [pointX, pointY] = [x, 100];
+        let angleRadians = (angle * Math.PI) / 180;
+        let newX = (pointX-x) * Math.cos(angleRadians) - (pointY-y) * Math.sin(angleRadians);
+        let newY = (pointX-x)  * Math.sin(angleRadians) + (pointY-y) * Math.cos(angleRadians);
+        context.beginPath();
+        context.arc(x, y, pointY*2, 0, 2 * Math.PI, false);
+        context.moveTo(x,y);
+        context.strokeStyle = '#0099ff';
+        context.lineTo(newX+x, newY+y);
+        renderText(`${angle/6}`, newX+x, newY+y);
+        context.closePath();
+        context.stroke();
+      }
+      clearScreen = () => {
+        context.beginPath();
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.closePath();
+        context.stroke();
+      }
+      function rand(max, min, _int) {
+      var max = (max === 0 || max)?max:1,
+          min = min || 0,
+          gen = min + (max - min) * Math.random();
+
+      return (_int) ? Math.round(gen) : gen;
+    };
+      (main = ()=> {
+        for(var i = 0; i < starfieldParticleCount; i++) {
+        		starfieldParticles.push(new StarfieldParticle(i));
+        	}
+        initPoints(1000);
+        let circles = createCircles(30);
+        let direction = 1;
+        let angle = 0;
+        setInterval(() => {
+          angle += 6;
+          if (angle >= 360) {
+            angle = 0
+          }
+        }, 1000);
+
+        setInterval(()=> {
+          window.requestAnimationFrame(()=>{
+            clearScreen();
+            renderStarfield();
+            drawClock(angle);
+          });
+        },17);// 17 ~ 24fps
+      })();
+
+
+    </script>
+  </body>
+</html>
